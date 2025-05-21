@@ -1,0 +1,609 @@
+{
+  "name": "Auto Email",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "c5341700-4ba1-48c9-9f1c-290bc504323d",
+      "name": "Extrahiere aus PDF1",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        40,
+        40
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nlet data = [];\nallItems.forEach(item => {\n  const binaryData = item.binary;\n  if (binaryData) {\n    Object.keys(binaryData).forEach(key => {\n      // MIME-Types für PDF und Word\n      const allowedMimeTypes = [\n        'application/pdf',\n        'application/msword',\n        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n      ];\n      \n      if (allowedMimeTypes.includes(binaryData[key]?.mimeType)) {\n        data.push({\n          binary: { data: binaryData[key] },\n          json: {\n            fileName: binaryData[key].fileName,\n            mimeType: binaryData[key].mimeType\n          }\n        });\n      }\n    });\n  }\n});\nreturn data;"
+      },
+      "id": "874ccd36-100d-488e-8173-8a7d45fcdaff",
+      "name": "Code: delete all but pdf and word",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -940,
+        480
+      ],
+      "executeOnce": false,
+      "typeVersion": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "0cd4c70c-9562-486e-95bd-497ba4816aac",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "leftValue": "={{ Object.keys($binary).length }}\n",
+              "rightValue": 0
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "8fa4b2cc-7492-4cc9-89e9-cb8c94e3ce48",
+      "name": "has attachment?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -700,
+        480
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "0cd4c70c-9562-486e-95bd-497ba4816aac",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              },
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "pdf"
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "c18503ff-64d6-415b-9a05-7fb4e383c0e7",
+      "name": "PDF or WORD?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -400,
+        360
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Deine Aufgabe ist es, den gegebenen Input-Text mit dem Output-Artikel zu vergleichen.\nBewerte, ob alle wesentlichen Informationen aus dem Input-Text im Output-Artikel korrekt enthalten sind, ohne dass neue, nicht im Input vorhandene Informationen hinzugefügt wurden.\nVorgehensweise:\n\n    Vollständigkeit prüfen: Sind alle relevanten Informationen aus dem Input im Output enthalten?\n    Genauigkeit bewerten: Wurde der Inhalt korrekt wiedergegeben, ohne Änderungen oder Auslassungen?\n    Zusätzliche Informationen erkennen: Wurden Inhalte hinzugefügt, die nicht im Input vorhanden sind? Falls ja, welche?\n\nAusgabe:\n\n    Bewertung (1 bis 5):\n        1 = Sehr schlecht (viele fehlende oder falsche Informationen, erhebliche neue Inhalte)\n        2 = Unzureichend (mehrere wichtige Auslassungen oder falsche Inhalte)\n        3 = Mittelmäßig (einige kleinere Fehler oder Ergänzungen)\n        4 = Gut (fast alles korrekt, minimale Abweichungen)\n        5 = Sehr gut (vollständige, korrekte Übereinstimmung)\n    Textuelle Begründung: Eine kurze Analyse, warum diese Bewertung vergeben wurde.\n\n\nHier der Input:\n\n{{ $('Gmail Trigger1').item.json.text }}\n\nUnd hier der Output:\n{{ $json.output }}"
+            },
+            {
+              "content": "sei pedantisch",
+              "role": "assistant"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "010f823c-f30c-4e1b-9489-7e9d71019e9c",
+      "name": "OpenAI self assesment",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        -100,
+        860
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "pAaXMCOABLw11Nf1",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Deine Aufgabe ist es, den gegebenen Input-Text mit dem Output-Artikel zu vergleichen.\nBewerte, ob alle wesentlichen Informationen aus dem Input-Text im Output-Artikel korrekt enthalten sind, ohne dass neue, nicht im Input vorhandene Informationen hinzugefügt wurden.\nVorgehensweise:\n\n    Vollständigkeit prüfen: Sind alle relevanten Informationen aus dem Input im Output enthalten?\n    Genauigkeit bewerten: Wurde der Inhalt korrekt wiedergegeben, ohne Änderungen oder Auslassungen?\n    Zusätzliche Informationen erkennen: Wurden Inhalte hinzugefügt, die nicht im Input vorhanden sind? Falls ja, welche?\n\nAusgabe:\n\n    Bewertung (1 bis 5):\n        1 = Sehr schlecht (viele fehlende oder falsche Informationen, erhebliche neue Inhalte)\n        2 = Unzureichend (mehrere wichtige Auslassungen oder falsche Inhalte)\n        3 = Mittelmäßig (einige kleinere Fehler oder Ergänzungen)\n        4 = Gut (fast alles korrekt, minimale Abweichungen)\n        5 = Sehr gut (vollständige, korrekte Übereinstimmung)\n    Textuelle Begründung: Eine kurze Analyse, warum diese Bewertung vergeben wurde.\n\n\nHier der Input:\n{{ $('Extrahiere aus PDF1').item.json.text }}\n{{ $('Gmail Trigger1').item.json.text }}\n\nUnd hier der Output:\n {{ $json.output }}"
+            },
+            {
+              "content": "sei pedantisch",
+              "role": "assistant"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b70adc3-3bfa-4146-b7d2-802f206a3f79",
+      "name": "OpenAI self-assesment2",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        660,
+        40
+      ],
+      "retryOnFail": true,
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "pAaXMCOABLw11Nf1",
+          "name": "OpenAi account 3"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "telaviv.dapdat@sdm.difesa.it",
+        "subject": "Prova",
+        "message": "=",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "id": "37b72af9-044e-49f4-95ef-3a2a71baf141",
+      "name": "reply to sender (word)",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1520,
+        340
+      ],
+      "webhookId": "5767887a-ca7a-41f9-9745-34d49bb79691",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2SGBY57TpnEwqF32",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Du bist Redakteur*in beim Schweizer Kulturmagazin Terra Grischuna. Erstelle aus den Textinformationen einen publikationsfertigen Artikel mit folgender Struktur und Vorgehensweise:\n\n    Stil und Sprache\n    – Schreibe in einer neutralen, reduzierten und klaren Sprache.\n    – Verwende die Schweizer Rechtschreibung.\n    – Halte dich an ein genderneutrales, aktives und verständliches Wording.\n\n    Form und Aufbau\n    – Nutze die Form der umgekehrten Pyramide (wichtigste Informationen zuerst, abnehmende Wichtigkeit im Verlauf).\n    – Verfasse einen Titel und klare Zwischentitel (keine Bulletpoints).\n    – Bei Veranstaltungshinweisen beginne den Artikel mit einem Satz, der Wer, wann, wo, was beantwortet (z. B. „Franz Tomaschett spricht am 5. Dezember in Chur über das Thema Arbeit.“).\n    – Der Fliesstext sollte zwischen 250 und 500 Wörtern umfassen.\n\n    Inhalte und Daten\n    – Fasse alle relevanten Inhalte verständlich zusammen.\n- halte dich an die Informationen aus der E-Mail. Erfinde nichts! Sei genau!\n- wenn dir Informationen fehlen, konstruiere keine neuen. \n    – Ignoriere alle anderen Dateiformate (z. B. Bilder, Excel-Tabellen).\n    – Verwende keine Aufzählungspunkte im finalen Artikel.\n- wenn subjektive oder streitbare Ansichten formuliert werden, attribuiere diese den Absendern dieser Ansichten. Nenne Quelle/Urheber solcher Äusserungen. Beispiel: \"ZITAT in direkter oder indirekter Rede\", schreibt die Gruppe Wolf in ihrer Mitteilung. \n\n    Zusätzliche Anweisung\n    – Extrahiere zunächst alle wichtigen Daten, Personen und Schlagworte. Liste sie strukturiert (z. B. mit Absätzen oder klarer Trennung) vor dem eigentlichen Artikel auf. Zähle zudem die Anzahl Zeichen und Wörter des Artikels.\n\nBeispielhafte Ausgabe-Struktur\n\nWichtige Daten und Personen\nNennehierknappundstrukturiertallerelevantenNamen,Daten,Orte,Termineetc.NennehierknappundstrukturiertallerelevantenNamen,Daten,Orte,Termineetc.\n\nTitel\nKurzer,pra¨gnanterTitelKurzer,pra¨gnanterTitel\n\n\nEinfu¨hrenderAbsatzmitdenwichtigstenInfos(wer,wann,wo,was)Einfu¨hrenderAbsatzmitdenwichtigstenInfos(wer,wann,wo,was)\n\nZwischentitel 1\nHintergrund,weitereZusammenha¨nge,abnehmendwichtigeDetailsHintergrund,weitereZusammenha¨nge,abnehmendwichtigeDetails\n\nZwischentitel 2\nRestlicheInformationen,kontextualisiertundzusammengefasstRestlicheInformationen,kontextualisiertundzusammengefasst\n\n(Ende des Artikels, maximal 500 Wörter.)\n\nNutze bitte diese Vorgaben, um den Artikel in hochwertiger, schweizkonformer Sprache zu verfassen.\n\nHier die Informationen aus dem E-Mail\n\n {{ $('Gmail Trigger1').item.json.text }}\n\n{{ $json.text }}",
+        "options": {}
+      },
+      "id": "5041c570-7f04-4ae3-bc29-0b5454a9fdae",
+      "name": "AI Article Writer 1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "maxTries": 5,
+      "position": [
+        300,
+        40
+      ],
+      "retryOnFail": true,
+      "typeVersion": 1.7,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Du bist Redakteur*in beim Schweizer Kulturmagazin Terra Grischuna. Erstelle aus den Textinformationen einen publikationsfertigen Artikel mit folgender Struktur und Vorgehensweise:\n\n    Stil und Sprache\n    – Schreibe in einer neutralen, reduzierten und klaren Sprache.\n    – Verwende die Schweizer Rechtschreibung.\n    – Halte dich an ein genderneutrales, aktives und verständliches Wording.\n\n    Form und Aufbau\n    – Nutze die Form der umgekehrten Pyramide (wichtigste Informationen zuerst, abnehmende Wichtigkeit im Verlauf).\n    – Verfasse einen Titel und klare Zwischentitel (keine Bulletpoints).\n    – Bei Veranstaltungshinweisen beginne den Artikel mit einem Satz, der Wer, wann, wo, was beantwortet (z. B. „Franz Tomaschett spricht am 5. Dezember in Chur über das Thema Arbeit.“).\n    – Der Fliesstext sollte zwischen 250 und 500 Wörtern umfassen.\n- wenn subjektive oder streitbare Ansichten formuliert werden, attribuiere diese den Absendern dieser Ansichten. Nenne Quelle/Urheber solcher Äusserungen. Beispiel: \"ZITAT in direkter oder indirekter Rede\", schreibt die Gruppe Wolf in ihrer Mitteilung. \n\n    Inhalte und Daten\n    – Fasse alle relevanten Inhalte verständlich zusammen.\n- halte dich an die Informationen aus der E-Mail. Erfinde nichts! Sei genau!\n- wenn dir Informationen fehlen, konstruiere keine neuen. \n    – Ignoriere alle anderen Dateiformate (z. B. Bilder, Excel-Tabellen).\n    – Verwende keine Aufzählungspunkte im finalen Artikel.\n\n    Zusätzliche Anweisung\n    – Extrahiere zunächst alle wichtigen Daten, Personen und Schlagworte. Liste sie strukturiert (z. B. mit Absätzen oder klarer Trennung) vor dem eigentlichen Artikel auf. Zähle zudem die Anzahl Zeichen und Wörter des Artikels.\n\nBeispielhafte Ausgabe-Struktur\n\nWichtige Daten und Personen\nNennehierknappundstrukturiertallerelevantenNamen,Daten,Orte,Termineetc.NennehierknappundstrukturiertallerelevantenNamen,Daten,Orte,Termineetc.\n\nTitel\nKurzer,pra¨gnanterTitelKurzer,pra¨gnanterTitel\n\n\nEinfu¨hrenderAbsatzmitdenwichtigstenInfos(wer,wann,wo,was)Einfu¨hrenderAbsatzmitdenwichtigstenInfos(wer,wann,wo,was)\n\nZwischentitel 1\nHintergrund,weitereZusammenha¨nge,abnehmendwichtigeDetailsHintergrund,weitereZusammenha¨nge,abnehmendwichtigeDetails\n\nZwischentitel 2\nRestlicheInformationen,kontextualisiertundzusammengefasstRestlicheInformationen,kontextualisiertundzusammengefasst\n\n(Ende des Artikels, maximal 500 Wörter.)\n\nNutze bitte diese Vorgaben, um den Artikel in hochwertiger, Schweizkonformer Sprache zu verfassen.\n\nHier die Informationen aus dem E-Mail\n\n {{ $('Gmail Trigger1').item.json.text }}",
+        "options": {}
+      },
+      "id": "436e0cd9-2e60-4be2-8da7-e74ce78eb8a8",
+      "name": "AI Article Writer 3",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -440,
+        860
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "sender": "gattingenti@gmail.com"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "780c6244-35ad-48da-a56b-a72cb44579a5",
+      "name": "Gmail Trigger1",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        -1180,
+        480
+      ],
+      "notesInFlow": false,
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2SGBY57TpnEwqF32",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operationMode": "documentLoader",
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "summarizationMethod": "stuff",
+              "prompt": "For each newspaper article you find, write a summary in italian. Don't summarize the Front Page Headlines. Report all the original numers where present. Don't add any comment of valuation done by you. In each article summary write the original paragraph title and the name of the source (e.g. newspapers, radio channels, tv channels). Summarize the comment too. The sources are often written at the beginning of the article:\n\n\"{text}\"\n\n"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        160,
+        340
+      ],
+      "id": "cbfc6dc4-1284-4c6c-b48a-1cc8a5ea35f7",
+      "name": "Summarization Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "chatgpt-4o-latest"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -20,
+        500
+      ],
+      "id": "68bc3064-1cd6-4b5b-ac4f-7f05fa0232ff",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "pAaXMCOABLw11Nf1",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        160,
+        520
+      ],
+      "id": "77565cf8-348f-4ca5-a90a-8ed4c2d9bb64",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        180,
+        680
+      ],
+      "id": "93d993c4-73f9-4b19-a88a-0f9e44a20b9d",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('Summarization Chain').item.json.response.text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        960,
+        340
+      ],
+      "id": "f4842ac0-28f6-45db-bbb4-0407e8fb591e",
+      "name": "Google Docs1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "Dmln1KvTHOVaeLz8",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "folderId": "1gqocYOA0WG5vphsMZquLikvt0FgZ9JlK",
+        "title": "=Resume +  {{ $('PDF or WORD?').item.json.fileName }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        660,
+        340
+      ],
+      "id": "6a68996f-82e8-483b-ace9-cea237ee3379",
+      "name": "Google Docs",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "Dmln1KvTHOVaeLz8",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1260,
+        340
+      ],
+      "id": "7784fd7a-1ef2-41c7-90a8-ab639e76a87f",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7HhH4eDXDvpWgvde",
+          "name": "Google Drive account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "PDF or WORD?": {
+      "main": [
+        [
+          {
+            "node": "Extrahiere aus PDF1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "has attachment?": {
+      "main": [
+        [
+          {
+            "node": "PDF or WORD?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Article Writer 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Article Writer 1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI self-assesment2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Article Writer 3": {
+      "main": [
+        [
+          {
+            "node": "OpenAI self assesment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrahiere aus PDF1": {
+      "main": [
+        [
+          {
+            "node": "AI Article Writer 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI self assesment": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI self-assesment2": {
+      "main": [
+        []
+      ]
+    },
+    "Code: delete all but pdf and word": {
+      "main": [
+        [
+          {
+            "node": "has attachment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Code: delete all but pdf and word",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "Google Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Docs1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Docs": {
+      "main": [
+        [
+          {
+            "node": "Google Docs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "reply to sender (word)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4b373660-a31d-4940-9b49-a86aa350ac1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a1fb38a2959f61b0a94f97a88069729458463416992ea70b369958f279a95ba8"
+  },
+  "id": "GDIb0Hz5bMUckGn7",
+  "tags": []
+}

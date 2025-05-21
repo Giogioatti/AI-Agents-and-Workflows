@@ -1,0 +1,120 @@
+{
+  "name": "Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f21674c5-c168-431c-92f1-91a2596e3ec6",
+      "name": "When chat message received",
+      "webhookId": "04f12051-afdd-493e-841b-4178e2c8862e"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Sei un assistente per uno studio di commercialisti. Rispondi usando questa lista di FAQ. Se la risposta non è presente, o non c'è nulla di simile, dai una risposta sensata ma specifica che al momento la risposta non si attiene alle informazioni sullo studio. Ecco le FAQ:[\n    [\n    {\n      \"domanda\": \"Quando scade il modello 730 per il 2025?\",\n      \"risposta\": \"La scadenza per l'invio del modello 730 nel 2025 è prevista per il 30 settembre. Ti consigliamo di consegnare i documenti almeno due settimane prima.\"\n    },\n    {\n      \"domanda\": \"Quali documenti servono per la dichiarazione dei redditi?\",\n      \"risposta\": \"Servono CU, spese sanitarie, spese scolastiche, interessi mutuo, spese per ristrutturazioni, affitto e altri oneri detraibili o deducibili.\"\n    },\n    {\n      \"domanda\": \"Posso detrarre le spese mediche o altre spese specifiche come la palestra?\",\n      \"risposta\": \"Le spese mediche sono generalmente detraibili al 19%, mentre la palestra è detraibile solo in casi particolari, ad esempio per i figli minorenni. Serve documentazione fiscale corretta.\"\n    },\n    {\n      \"domanda\": \"Come si registra una fattura elettronica correttamente?\",\n      \"risposta\": \"Va generata tramite software abilitato, inviata al Sistema di Interscambio (SDI) e conservata digitalmente secondo normativa.\"\n    },\n    {\n      \"domanda\": \"Cosa succede se consegno i documenti in ritardo per la dichiarazione?\",\n      \"risposta\": \"Potresti perdere benefici fiscali o incorrere in sanzioni. Contattaci subito per capire come intervenire.\"\n    },\n    {\n      \"domanda\": \"Mi conviene aprire una partita IVA in regime forfettario nel 2025?\",\n      \"risposta\": \"Dipende dal tuo volume d'affari e dal tipo di attività. Il regime forfettario prevede imposta sostitutiva al 15% (o 5% per i primi anni).\"\n    },\n    {\n      \"domanda\": \"Quali sono i requisiti per restare nel regime forfettario nel 2025?\",\n      \"risposta\": \"Reddito massimo 85.000€, assenza di partecipazioni in società di persone, e rispetto di altri criteri previsti dalla legge.\"\n    },\n    {\n      \"domanda\": \"Come funziona il rimborso fiscale? Arriverà in automatico?\",\n      \"risposta\": \"Se hai diritto a un rimborso, arriverà in automatico sul conto corrente indicato nella dichiarazione, salvo controlli preventivi.\"\n    },\n    {\n      \"domanda\": \"Posso detrarre l’IVA su fatture di acquisto non registrate in tempo?\",\n      \"risposta\": \"Se la fattura non è registrata entro i termini, l’IVA non è detraibile nell’anno corrente. Consulta un esperto per possibili soluzioni.\"\n    },\n    {\n      \"domanda\": \"Quali sono le novità fiscali della Legge di Bilancio 2025?\",\n      \"risposta\": \"Stiamo analizzando tutte le novità: invieremo un aggiornamento personalizzato appena disponibile. Contattaci per riceverlo.\"\n    },\n    {\n      \"domanda\": \"Qual è la tariffa minima per una consulenza?\",\n      \"risposta\": \"i nostri professionisti partono da un minimo di 50€.\"\n    }\n  ]\n  \n  "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "b6543576-202e-4e9a-b1fc-1e7446f77341",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        220
+      ],
+      "id": "a2592773-f38b-403d-8499-ac2b921deb5c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ut6iuOdzdtUOysla",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        360,
+        220
+      ],
+      "id": "6b3a171b-990a-4d35-ba91-4c4badfa8b4c",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "849990ec-a1d4-4539-952e-4d1aff368107",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a1fb38a2959f61b0a94f97a88069729458463416992ea70b369958f279a95ba8"
+  },
+  "id": "x0DV5oxgvbD0NvGI",
+  "tags": []
+}
