@@ -1,0 +1,347 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        260
+      ],
+      "id": "fc002c24-3c82-4968-aad7-cb87960e038b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "5LfWt5GF1Z2QUeoX",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Estrai dalla seguente frase i dati della richiesta di preventivo per radioline.\n\nRestituisci esclusivamente un JSON con i seguenti campi:\n\n- \"servizio\": \"noleggio\" o \"vendita\"\n- \"quantita\": numero intero\n- \"durata\": numero intero (solo per il noleggio, se non presente metti null)\n- \"citta\": nome della città\n- \"auricolari\": true/false\n- \"assicurazione\": true/false (default false se non menzionata)\n- \"ritiro_in_sede\": true/false (true solo se viene specificato chiaramente, altrimenti false)\n\nTesto: {{ $json[\"snippet\"] }}\n\nRispondi solo con un oggetto JSON valido.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        40
+      ],
+      "id": "e0b83fd3-32a6-4350-b016-11bda40b4971",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -360,
+        260
+      ],
+      "id": "06947edb-7711-4ef1-a1b7-793f8118dc91",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "5LfWt5GF1Z2QUeoX",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json[\"output\"];\nconst jsonString = raw.match(/```json\\n([\\s\\S]*?)\\n```/)[1];\nreturn [\n  {\n    json: JSON.parse(jsonString)\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        40
+      ],
+      "id": "3116a967-cd4b-4f56-b245-bcc098f70d1c",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "fromEmail": "giogioatti@gmail.com",
+        "toEmail": "giogioatti@gmail.com",
+        "subject": "Preventivo per Noleggio Radioline",
+        "message": "={{ $json.output }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        520,
+        40
+      ],
+      "id": "076eea3a-2d5b-420b-9a4c-611a47bf707d",
+      "name": "Send Email",
+      "webhookId": "83044d28-811f-4a8b-9bf6-2e2efe61b90a",
+      "credentials": {
+        "smtp": {
+          "id": "Sr30JxV0GikdJGrX",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.approved }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "90785eb1-d137-4ad3-9963-99515783ffa2"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        740,
+        40
+      ],
+      "id": "66e5bc87-acd0-402c-b40f-3dbd146f2451",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "fromEmail": "giogioatti@gmail.com",
+        "toEmail": "attingenti.1984953@studenti.uniroma1.it",
+        "subject": "Preventivo per Noleggio Radioline",
+        "emailFormat": "text",
+        "text": "={{ $('AI Agent2').item.json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        40
+      ],
+      "id": "16515dd4-9471-4c39-a201-831415b20050",
+      "name": "Send Email1",
+      "webhookId": "1231ca12-22d8-432b-8e79-7a337b4ddebd",
+      "credentials": {
+        "smtp": {
+          "id": "Sr30JxV0GikdJGrX",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        40
+      ],
+      "id": "62eb6608-60f9-4e54-9fed-514aae0905ea",
+      "name": "Markdown1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sei un assistente che genera email formali.  \nRicevi in input un oggetto JSON con questi campi:\n{\n  \"servizio\": {{ $json[\"servizio\"] }},\n  \"quantita\": {{ $json[\"quantita\"] }},\n  \"durata\": {{ $json[\"durata\"] }},\n  \"citta\": \"{{ $json[\"citta\"] }}\",\n  \"auricolari\": {{ $json[\"auricolari\"] }},\n  \"assicurazione\": {{ $json[\"assicurazione\"] }},\n  \"ritiro_in_sede\": {{ $json[\"ritiro_in_sede\"] }}\n}\nApplicando queste regole di calcolo:\n\nPREZZI NOLEGGIO\n- €3,00/giorno per radiolina  \n- Sconto quantità: 1–10→0%, 11–30→5%, >30→10%  \n- Sconto durata: >7 gg→5%, >14 gg→10%  \n- Spedizione: gratis se ritiro in sede, €20 standard, +€10 per Sardegna/Sicilia  \n- Assicurazione: +5% sul totale  \n- Auricolari usa e getta: €0,50 cad.\n\nPREZZI VENDITA\n- €49,00 per radiolina  \n- Sconto quantità: 10–20→5%, 21–50→10%, >50→15%  \n- Spedizione come sopra\n\nGenera **solo il corpo** di una email formale al cliente con:\n- un breve ringraziamento  \n- riepilogo dei dati (servizio, quantità, durata, città)  \n- calcolo dettagliato dei costi  \n- totale finale  \n- menzione di eventuali opzioni non incluse  \n- invito a confermare  \n- chiusura cordiale\n\n**Non includere l’oggetto**, **non porre domande**, **non aggiungere nulla di non derivato dal JSON**.```\n",
+        "options": {
+          "systemMessage": "=Sei un assistente commerciale che compila email di risposta a richieste di preventivo. \nHai già ricevuto tutti i dati necessari in formato JSON. \nNON chiedere mai altri dati al cliente. \nScrivi sempre una email formale, professionale, e orientata alla vendita.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        160,
+        40
+      ],
+      "id": "dd0ab71c-41f5-4f83-9be3-9ef784a5b504",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "mailbox": "Inbox",
+        "postProcessAction": "nothing",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        40
+      ],
+      "id": "e653e207-0033-4baf-b99b-40dd37376470",
+      "name": "Email Trigger (IMAP)1",
+      "credentials": {
+        "imap": {
+          "id": "eial0GwpRL3EqyUj",
+          "name": "IMAP account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Trigger (IMAP)1": {
+      "main": [
+        [
+          {
+            "node": "Markdown1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aacd1b21-97ad-42b6-a0e9-92ddfb9e0f8b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6274481fcf4e8304866c3407022cd718f5df2dba607fe5f557aadddce5d2147"
+  },
+  "id": "ffu7okmCsPfJ7Lng",
+  "tags": []
+}
